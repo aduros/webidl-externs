@@ -7,6 +7,7 @@ import WebIDL
 import Haxe
 
 whitelist = [
+    "input/typedarray.webidl",
     "webidl/AbortablePromise.webidl",
     "webidl/AbstractWorker.webidl",
     "webidl/ActivityRequestHandler.webidl",

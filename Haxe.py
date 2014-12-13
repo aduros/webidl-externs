@@ -1,8 +1,18 @@
 import sys
 
 import re
+from sets import Set
 
 from WebIDL import *
+
+RESERVED_WORDS = Set([
+    "abstract", "as", "boolean", "break", "byte", "case", "catch", "char", "class", "continue", "const",
+    "debugger", "default", "delete", "do", "double", "else", "enum", "export", "extends", "false", "final",
+    "finally", "float", "for", "function", "goto", "if", "implements", "import", "in", "instanceof", "int",
+    "interface", "is", "let", "long", "namespace", "native", "new", "null", "package", "private", "protected",
+    "public", "return", "short", "static", "super", "switch", "synchronized", "this", "throw", "throws",
+    "transient", "true", "try", "typeof", "use", "var", "void", "volatile", "while", "with", "yield"
+])
 
 class Program ():
     idls = None
@@ -11,18 +21,71 @@ class Program ():
         self.idls = idls
 
     def generate (self, outputDir):
+        availableTypes = Set()
         for idl in self.idls:
-            if not isinstance(idl, IDLPartialInterface) and \
-                    not isinstance(idl, IDLImplementsStatement) and \
-                    not isinstance(idl, IDLExternalInterface) and \
-                    not isinstance(idl, IDLTypedefType) and \
-                    not isinstance(idl, IDLCallbackType) and \
-                    isAvailable(idl):
+            if (isinstance(idl, IDLInterface) or
+                    isinstance(idl, IDLEnum) or
+                    isinstance(idl, IDLDictionary)): #and isAvailable(idl):
+                availableTypes.add(idl.identifier.name)
+
+        for idl in self.idls:
+            if (isinstance(idl, IDLInterface) or
+                    isinstance(idl, IDLEnum) or
+                    # isinstance(idl, IDLDictionary)): #and isAvailable(idl):
+                    isinstance(idl, IDLDictionary)) and idl.identifier.name in availableTypes:
                 print("// Generated from %s" % idl.location.get())
-                generate(idl, sys.stdout)
+                generate(idl, availableTypes, sys.stdout)
                 print("\n")
 
-def generate (idl, file):
+# Return all the types used by this IDL
+def checkUsage (idl):
+    used = Set()
+
+    if isinstance(idl, IDLInterface):
+        used |= checkUsage(idl.identifier)
+        if idl.parent:
+            used |= checkUsage(idl.parent)
+
+        for member in idl.members:
+            if isAvailable(member):
+                used |= checkUsage(member)
+        used |= checkUsage(idl.ctor())
+
+    elif isinstance(idl, IDLCallbackType):
+        returnType, arguments = idl.signatures()[0]
+        for argument in arguments:
+            used |= checkUsage(argument.type)
+        used |= checkUsage(returnType)
+
+    elif isinstance(idl, IDLType):
+        if idl.nullable():
+            used |= checkUsage(idl.inner)
+        elif idl.isArray() or idl.isSequence():
+            used |= checkUsage(idl.inner)
+        elif idl.isPromise():
+            used |= checkUsage(idl._promiseInnerType)
+        elif not idl.isPrimitive():
+            used.add(idl.name)
+
+    elif isinstance(idl, IDLIdentifier):
+        used.add(idl.name)
+
+    elif isinstance(idl, IDLAttribute) or isinstance(idl, IDLConst):
+        used |= checkUsage(idl.type)
+
+    elif isinstance(idl, IDLMethod):
+        for returnType, arguments in idl.signatures():
+            for argument in arguments:
+                used |= checkUsage(argument)
+            used |= checkUsage(returnType)
+
+    elif isinstance(idl, IDLArgument):
+        used |= checkUsage(idl.type)
+
+    return used
+
+# Convert an IDL to Haxe
+def generate (idl, availableTypes, file):
     needsIndent = [False]
     indentDepth = [0]
     def beginIndent ():
@@ -53,9 +116,9 @@ def generate (idl, file):
     def writeIdl (idl):
         if isinstance(idl, IDLInterface):
             writeln("@:native(\"%s\")" % stripTrailingUnderscore(idl.identifier.name))
-            write("extern class ", idl.identifier)
+            write("extern class ", toHaxeType(idl.identifier.name))
             if idl.parent:
-                write(" extends ", idl.parent.identifier)
+                write(" extends ", toHaxeType(idl.parent.identifier.name))
             # for iface in idl.implementedInterfaces:
             #     write(" extends ", iface.identifier)
 
@@ -107,13 +170,16 @@ def generate (idl, file):
 
         elif isinstance(idl, IDLCallbackType):
             returnType, arguments = idl.signatures()[0]
-            # write("typedef ", idl.identifier, " = ")
-            for argument in arguments:
-                write(argument.type, " -> ")
+            if len(arguments) > 0:
+                for argument in arguments:
+                    write(argument.type, " -> ")
+            else:
+                write("Void -> ")
             write(returnType)
 
         elif isinstance(idl, IDLDictionary):
-            writeln("typedef ", idl.identifier, " =")
+            # writeln("typedef ", idl.identifier, " =")
+            writeln("typedef ", toHaxeType(idl.identifier.name), " =")
             writeln("{")
             beginIndent()
             if idl.parent:
@@ -144,18 +210,25 @@ def generate (idl, file):
             elif idl.isArray() or idl.isSequence():
                 write("Array<", idl.inner, ">")
             elif idl.isPromise():
-                write("Promise<", idl._promiseInnerType, ">")
+                # TODO(bruno): Enable Promise type parameter
+                write("Promise/*<", idl._promiseInnerType, ">*/")
+            elif idl.isUnion():
+                write("Dynamic") # TODO(bruno): Handle union types somehow
+            elif idl.isString() or idl.isByteString() or idl.isDOMString():
+                write("String")
             elif idl.isNumeric():
                 write("Int" if idl.isInteger() else "Float")
             elif idl.isBoolean():
                 write("Bool")
-            elif idl.isObject() or idl.isAny() or idl.name == "nsISupports" or idl.name == "nsIFile":
+            elif idl.isObject() or idl.isAny():
+                write("Dynamic")
+            elif idl.name not in availableTypes:
                 write("Dynamic")
             else:
-                write(toHaxeName(idl.name))
+                write(toHaxeType(idl.name))
 
         elif isinstance(idl, IDLIdentifier):
-            write(toHaxeName(idl.name)+"_")
+            write(toHaxeIdentifier(idl.name))
 
         elif isinstance(idl, IDLAttribute):
             if idl.isStatic():
@@ -210,6 +283,8 @@ def generate (idl, file):
                 write("\"%s\"" % idl.value)
             elif idl.type.isBoolean():
                 write("true" if idl.value else "false")
+            elif idl.type.isInteger() and idl.value >= 2147483648:
+                write("cast %s" % idl.value)
             else:
                 write(str(idl.value))
 
@@ -227,8 +302,10 @@ def isDefinedInParents (idl, member, checkMembers=False):
     for iface in idl.implementedInterfaces:
         if isDefinedInParents(iface, member, True):
             return True
-    if checkMembers and member in idl.members:
-        return True
+    if checkMembers:
+        for other in idl.members:
+            if other.identifier.name == member.identifier.name:
+                return True
     return False
 
 def stripTrailingUnderscore (name):
@@ -236,13 +313,27 @@ def stripTrailingUnderscore (name):
         name = name[0:-1]
     return name
 
-def toHaxeName (name):
-    return stripTrailingUnderscore(name)
+def toHaxeIdentifier (name):
+    name = re.sub(r"[^A-Za-z0-9_]", "_", name)
+    if name in RESERVED_WORDS:
+        name += "_"
+    return name
+
+def toHaxeType (name):
+    name = stripTrailingUnderscore(name)
+    if name != "":
+        name = name[0].upper() + name[1:]
+    return name
 
 def toEnumValue (value):
     if value == "":
         return "NONE"
-    return re.sub(r"[^A-Z0-9_]", "_", value.upper())
+    value = toHaxeIdentifier(value)
+    value = re.sub(r"([a-z])([A-Z])", r"\1_\2", value)
+    value = value.upper()
+    if re.search(r"^[0-9]", value):
+        value = "_"+value
+    return value
 
 def isMozPrefixed (name):
     return name.lower().startswith("moz")
