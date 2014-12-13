@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+import glob
+import os
+import subprocess
+from sets import Set
+
+import WebIDL
+import Haxe
+
+CONFIG = {
+    "MOZ_BUILD_APP": "browser",
+    "MOZ_GAMEPAD": True,
+
+    "MOZ_AUDIO_CHANNEL_MANAGER": False,
+    "MOZ_B2G_BT": False,
+    "MOZ_B2G_FM": False,
+    "MOZ_B2G_RIL": False,
+    "MOZ_DEBUG": False,
+    "MOZ_EME": False,
+    "MOZ_NFC": False,
+    "MOZ_WEBRTC": False,
+    "MOZ_WEBSPEECH": False,
+    "MOZ_WIDGET_TOOLKIT": False,
+}
+execfile("webidl/mozilla/moz.build")
+
+parser = WebIDL.Parser()
+def parse (file):
+    process = subprocess.Popen(["cpp", "-C", "-P", file], stdout=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    parser.parse(stdout, file)
+    return
+
+# Include all files in webidl
+for file in glob.glob("webidl/*.webidl"):
+    parse(file)
+
+# Include all files from mozilla
+for file in WEBIDL_FILES + PREPROCESSED_WEBIDL_FILES:
+    parse("webidl/mozilla/"+file)
+
+idls = parser.finish()
+
+haxe = Haxe.Program(idls)
+haxe.generate("output")

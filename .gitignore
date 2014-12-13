@@ -1,2 +1,4 @@
 webidlyacc.py
+parser.out
 *.pyc
+.svn
