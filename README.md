@@ -5,3 +5,7 @@
 - Add all members to CSSStyleDeclaration
 - For each onfoobar property on an EventDispatcher, add a FOOBAR
   constant
+- Add Document.createFooElement inline shortcuts.
+- Add CanvasElement.getContext2d(), getContextWebGL() inline shortcuts.
+- Remove HTML\*, IDB\*, etc prefixes.
+- For each class, copy all implementedInterfaces members.

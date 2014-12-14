@@ -43,18 +43,18 @@ class Program ():
             if isinstance(idl, IDLInterface) or \
                     isinstance(idl, IDLEnum) or \
                     isinstance(idl, IDLDictionary) and isAvailable(idl):
-                knownTypes.append(idl.identifier.name)
+                knownTypes.append(stripTrailingUnderscore(idl.identifier.name))
 
         usedTypes = Set()
         for idl in self.idls:
-            if isinstance(idl, IDLInterface):
+            if isinstance(idl, IDLInterface) and not idl.getExtendedAttribute("NoInterfaceObject"):
                 usedTypes |= checkUsage(idl)
 
         for idl in self.idls:
             if (isinstance(idl, IDLInterface) or \
                     isinstance(idl, IDLEnum) or \
                     isinstance(idl, IDLDictionary)) and \
-                    idl.identifier.name in usedTypes and \
+                    stripTrailingUnderscore(idl.identifier.name) in usedTypes and \
                     isAvailable(idl):
                 print("// Generated from %s" % idl.location.get())
                 generate(idl, usedTypes, knownTypes, sys.stdout)
@@ -97,10 +97,10 @@ def checkUsage (idl):
         elif idl.isPromise():
             used |= checkUsage(idl._promiseInnerType)
         elif not idl.isPrimitive():
-            used.add(idl.name)
+            used.add(stripTrailingUnderscore(idl.name))
 
     elif isinstance(idl, IDLIdentifier):
-        used.add(idl.name)
+        used.add(stripTrailingUnderscore(idl.name))
 
     elif isinstance(idl, IDLAttribute) or isinstance(idl, IDLConst):
         used |= checkUsage(idl.type)
@@ -151,8 +151,8 @@ def generate (idl, usedTypes, knownTypes, file):
             write("extern class ", toHaxeType(idl.identifier.name))
             if idl.parent:
                 write(" extends ", toHaxeType(idl.parent.identifier.name))
-            # for iface in idl.implementedInterfaces:
-            #     write(" extends ", iface.identifier)
+            for iface in idl.implementedInterfaces:
+                write(" // extends %s" % type(iface.identifier))
 
             arrayAccess = None
             staticVars = []
@@ -236,6 +236,7 @@ def generate (idl, usedTypes, knownTypes, file):
             write("}")
 
         elif isinstance(idl, IDLType):
+            name = stripTrailingUnderscore(idl.name)
             if idl.nullable():
                 # write("Null<", idl.inner, ">")
                 write(idl.inner)
@@ -243,7 +244,7 @@ def generate (idl, usedTypes, knownTypes, file):
                 write("Array<", idl.inner, ">")
             elif idl.isPromise():
                 # TODO(bruno): Enable Promise type parameter
-                write("Promise/*<", idl._promiseInnerType, ">*/")
+                write("Promise/*<%s>*/" % idl._promiseInnerType)
             elif idl.isUnion():
                 write("Dynamic") # TODO(bruno): Handle union types somehow
             elif idl.isString() or idl.isByteString() or idl.isDOMString() or idl.isUSVString():
@@ -258,8 +259,8 @@ def generate (idl, usedTypes, knownTypes, file):
                 write("Date")
             elif idl.isObject() or idl.isAny():
                 write("Dynamic")
-            elif idl.name not in usedTypes or idl.name not in knownTypes:
-                write("Dynamic")
+            elif name not in usedTypes or name not in knownTypes:
+                write("Dynamic/*%s*/" % name)
             else:
                 write(toHaxeType(idl.name))
 
