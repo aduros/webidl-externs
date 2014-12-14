@@ -14,6 +14,23 @@ RESERVED_WORDS = Set([
     "transient", "true", "try", "typeof", "use", "var", "void", "volatile", "while", "with", "yield"
 ])
 
+WHITELIST = Set([
+    "Console",
+])
+
+BLACKLIST = Set([
+    "CallsList",
+])
+
+PREFS = Set([
+    "media.mediasource.enabled",
+    "canvas.path.enabled",
+])
+
+FUNCS = Set([
+    "nsDocument::IsWebComponentsEnabled",
+])
+
 class Program ():
     idls = None
 
@@ -21,20 +38,26 @@ class Program ():
         self.idls = idls
 
     def generate (self, outputDir):
-        availableTypes = Set()
+        knownTypes = []
         for idl in self.idls:
-            if (isinstance(idl, IDLInterface) or
-                    isinstance(idl, IDLEnum) or
-                    isinstance(idl, IDLDictionary)): #and isAvailable(idl):
-                availableTypes.add(idl.identifier.name)
+            if isinstance(idl, IDLInterface) or \
+                    isinstance(idl, IDLEnum) or \
+                    isinstance(idl, IDLDictionary) and isAvailable(idl):
+                knownTypes.append(idl.identifier.name)
+
+        usedTypes = Set()
+        for idl in self.idls:
+            if isinstance(idl, IDLInterface):
+                usedTypes |= checkUsage(idl)
 
         for idl in self.idls:
-            if (isinstance(idl, IDLInterface) or
-                    isinstance(idl, IDLEnum) or
-                    # isinstance(idl, IDLDictionary)): #and isAvailable(idl):
-                    isinstance(idl, IDLDictionary)) and idl.identifier.name in availableTypes:
+            if (isinstance(idl, IDLInterface) or \
+                    isinstance(idl, IDLEnum) or \
+                    isinstance(idl, IDLDictionary)) and \
+                    idl.identifier.name in usedTypes and \
+                    isAvailable(idl):
                 print("// Generated from %s" % idl.location.get())
-                generate(idl, availableTypes, sys.stdout)
+                generate(idl, usedTypes, knownTypes, sys.stdout)
                 print("\n")
 
 # Return all the types used by this IDL
@@ -42,6 +65,15 @@ def checkUsage (idl):
     used = Set()
 
     if isinstance(idl, IDLInterface):
+        def isAvailableRecursive (idl):
+            if not isAvailable(idl):
+                return False
+            if idl.parent:
+                return isAvailableRecursive(idl.parent)
+            return True
+        if not isAvailableRecursive(idl):
+            return used
+
         used |= checkUsage(idl.identifier)
         if idl.parent:
             used |= checkUsage(idl.parent)
@@ -85,7 +117,7 @@ def checkUsage (idl):
     return used
 
 # Convert an IDL to Haxe
-def generate (idl, availableTypes, file):
+def generate (idl, usedTypes, knownTypes, file):
     needsIndent = [False]
     indentDepth = [0]
     def beginIndent ():
@@ -214,15 +246,19 @@ def generate (idl, availableTypes, file):
                 write("Promise/*<", idl._promiseInnerType, ">*/")
             elif idl.isUnion():
                 write("Dynamic") # TODO(bruno): Handle union types somehow
-            elif idl.isString() or idl.isByteString() or idl.isDOMString():
+            elif idl.isString() or idl.isByteString() or idl.isDOMString() or idl.isUSVString():
                 write("String")
             elif idl.isNumeric():
                 write("Int" if idl.isInteger() else "Float")
             elif idl.isBoolean():
                 write("Bool")
+            elif idl.isVoid():
+                write("Void")
+            elif idl.isDate():
+                write("Date")
             elif idl.isObject() or idl.isAny():
                 write("Dynamic")
-            elif idl.name not in availableTypes:
+            elif idl.name not in usedTypes or idl.name not in knownTypes:
                 write("Dynamic")
             else:
                 write(toHaxeType(idl.name))
@@ -338,12 +374,31 @@ def toEnumValue (value):
 def isMozPrefixed (name):
     return name.lower().startswith("moz")
 
+def isDisabled (attrs, whitelist):
+    if attrs:
+        for attr in attrs:
+            if attr not in whitelist:
+                return True
+    return False
+
 def isAvailable (idl):
+    if idl.identifier.name in WHITELIST:
+        return True
+    if idl.identifier.name in BLACKLIST:
+        return False
+
     if isMozPrefixed(idl.identifier.name):
         return False
-    return not hasattr(idl, "getExtendedAttribute") or (
-        not idl.getExtendedAttribute("Pref") and
-        not idl.getExtendedAttribute("ChromeOnly") and
-        not idl.getExtendedAttribute("Func") and
-        not idl.getExtendedAttribute("AvailableIn") and
-        not idl.getExtendedAttribute("CheckPermissions"))
+
+    if hasattr(idl, "getExtendedAttribute"):
+        if idl.getExtendedAttribute("ChromeOnly") or \
+                idl.getExtendedAttribute("AvailableIn") or \
+                idl.getExtendedAttribute("CheckPermissions") or \
+                idl.getExtendedAttribute("NavigatorProperty"):
+            return False
+        if isDisabled(idl.getExtendedAttribute("Pref"), PREFS):
+            return False
+        if isDisabled(idl.getExtendedAttribute("Func"), FUNCS):
+            return False
+
+    return True
