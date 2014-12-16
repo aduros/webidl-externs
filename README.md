@@ -9,3 +9,4 @@
 - Add CanvasElement.getContext2d(), getContextWebGL() inline shortcuts.
 - Remove HTML\*, IDB\*, etc prefixes.
 - For each class, copy all implementedInterfaces members.
+- Support WebIDL union types by using haxe.EitherType.

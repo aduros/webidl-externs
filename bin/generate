@@ -3,7 +3,6 @@
 import glob
 import os
 import subprocess
-from sets import Set
 
 import WebIDL
 import Haxe
@@ -23,6 +22,9 @@ CONFIG = {
     "MOZ_WEBSPEECH": False,
     "MOZ_WIDGET_TOOLKIT": False,
 }
+MOZ_BLACKLIST = set([
+    "EventListener.webidl",
+])
 execfile("webidl/mozilla/moz.build")
 
 parser = WebIDL.Parser()
@@ -37,7 +39,7 @@ for file in glob.glob("webidl/*.webidl"):
     parse(file)
 
 # Include all files from mozilla
-for file in WEBIDL_FILES + PREPROCESSED_WEBIDL_FILES:
+for file in set(WEBIDL_FILES + PREPROCESSED_WEBIDL_FILES) - MOZ_BLACKLIST:
     parse("webidl/mozilla/"+file)
 
 idls = parser.finish()

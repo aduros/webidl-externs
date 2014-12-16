@@ -1,11 +1,10 @@
 import sys
 
 import re
-from sets import Set
 
 from WebIDL import *
 
-RESERVED_WORDS = Set([
+RESERVED_WORDS = set([
     "abstract", "as", "boolean", "break", "byte", "case", "catch", "char", "class", "continue", "const",
     "debugger", "default", "delete", "do", "double", "else", "enum", "export", "extends", "false", "final",
     "finally", "float", "for", "function", "goto", "if", "implements", "import", "in", "instanceof", "int",
@@ -14,20 +13,20 @@ RESERVED_WORDS = Set([
     "transient", "true", "try", "typeof", "use", "var", "void", "volatile", "while", "with", "yield"
 ])
 
-WHITELIST = Set([
+WHITELIST = set([
     "Console",
 ])
 
-BLACKLIST = Set([
+BLACKLIST = set([
     "CallsList",
 ])
 
-PREFS = Set([
+PREFS = set([
     "media.mediasource.enabled",
     "canvas.path.enabled",
 ])
 
-FUNCS = Set([
+FUNCS = set([
     "nsDocument::IsWebComponentsEnabled",
 ])
 
@@ -45,7 +44,7 @@ class Program ():
                     isinstance(idl, IDLDictionary) and isAvailable(idl):
                 knownTypes.append(stripTrailingUnderscore(idl.identifier.name))
 
-        usedTypes = Set()
+        usedTypes = set()
         for idl in self.idls:
             if isinstance(idl, IDLInterface) and not idl.getExtendedAttribute("NoInterfaceObject"):
                 usedTypes |= checkUsage(idl)
@@ -62,7 +61,7 @@ class Program ():
 
 # Return all the types used by this IDL
 def checkUsage (idl):
-    used = Set()
+    used = set()
 
     if isinstance(idl, IDLInterface):
         def isAvailableRecursive (idl):
@@ -152,7 +151,7 @@ def generate (idl, usedTypes, knownTypes, file):
             if idl.parent:
                 write(" extends ", toHaxeType(idl.parent.identifier.name))
             for iface in idl.implementedInterfaces:
-                write(" // extends %s" % type(iface.identifier))
+                write(" // extends %s" % iface.identifier.name)
 
             arrayAccess = None
             staticVars = []
@@ -246,7 +245,7 @@ def generate (idl, usedTypes, knownTypes, file):
                 # TODO(bruno): Enable Promise type parameter
                 write("Promise/*<%s>*/" % idl._promiseInnerType)
             elif idl.isUnion():
-                write("Dynamic") # TODO(bruno): Handle union types somehow
+                write("Dynamic/*UNION*/") # TODO(bruno): Handle union types somehow
             elif idl.isString() or idl.isByteString() or idl.isDOMString() or idl.isUSVString():
                 write("String")
             elif idl.isNumeric():
@@ -309,7 +308,7 @@ def generate (idl, usedTypes, knownTypes, file):
                     write(";")
 
         elif isinstance(idl, IDLArgument):
-            if idl.optional or idl.type.nullable():
+            if idl.optional:
                 write("?")
             write(idl.identifier, " : ", idl.type)
             if idl.defaultValue and not isinstance(idl.defaultValue, IDLNullValue) and not isinstance(idl.defaultValue, IDLUndefinedValue):
@@ -373,7 +372,8 @@ def toEnumValue (value):
     return value
 
 def isMozPrefixed (name):
-    return name.lower().startswith("moz")
+    name = name.lower()
+    return name.startswith("moz") or name.startswith("onmoz") or name.startswith("__")
 
 def isDisabled (attrs, whitelist):
     if attrs:
