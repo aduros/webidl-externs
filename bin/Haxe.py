@@ -144,6 +144,10 @@ def generate (idl, usedTypes, knownTypes, file):
             else:
                 writeIdl(arg)
 
+    def writeNativeMeta (idl):
+        if idl.name != toHaxeIdentifier(idl.name):
+            writeln("@:native(\"%s\")" % idl.name)
+
     def writeIdl (idl):
         if isinstance(idl, IDLInterface):
             writeln("@:native(\"%s\")" % stripTrailingUnderscore(idl.identifier.name))
@@ -217,6 +221,7 @@ def generate (idl, usedTypes, knownTypes, file):
                 writeln("> ", idl.parent.identifier, ",")
             for member in idl.members:
                 if isAvailable(member):
+                    writeNativeMeta(member.identifier)
                     if member.optional:
                         write("@:optional ")
                     writeln("var ", member.identifier, " : ", member.type, ";")
@@ -267,6 +272,7 @@ def generate (idl, usedTypes, knownTypes, file):
             write(toHaxeIdentifier(idl.name))
 
         elif isinstance(idl, IDLAttribute):
+            writeNativeMeta(idl.identifier)
             if idl.isStatic():
                 write("static ")
             write("var ", idl.identifier)
@@ -275,6 +281,7 @@ def generate (idl, usedTypes, knownTypes, file):
             write(" : ", idl.type, ";")
 
         elif isinstance(idl, IDLConst):
+            writeNativeMeta(idl.identifier)
             write("static inline var ", idl.identifier, " : ", idl.type, " = ", idl.value, ";")
 
         elif isinstance(idl, IDLMethod):
@@ -283,6 +290,7 @@ def generate (idl, usedTypes, knownTypes, file):
 
             constructor = idl.identifier.name == "constructor"
 
+            writeNativeMeta(idl.identifier)
             signatures = idl.signatures()
             for idx, (returnType, arguments) in enumerate(signatures):
                 overload = (idx < len(signatures)-1)

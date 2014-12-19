@@ -1,12 +1,14 @@
-# TODO
+# TODOs for API parity with old externs
 
-- Generate inline methods for escaped properties (eg: `continue_`)
-- Split output into multiple files.
 - Add all members to CSSStyleDeclaration
-- For each onfoobar property on an EventDispatcher, add a FOOBAR
-  constant
 - Add Document.createFooElement inline shortcuts.
 - Add CanvasElement.getContext2d(), getContextWebGL() inline shortcuts.
 - Remove HTML\*, IDB\*, etc prefixes.
 - For each class, copy all implementedInterfaces members.
+- Split output into multiple files.
+
+# Things that will be nice to have
+
 - Support WebIDL union types by using haxe.EitherType.
+- For each onfoobar property on an EventDispatcher, add a FOOBAR =
+  "foobar" constant
