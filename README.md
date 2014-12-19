@@ -4,7 +4,6 @@
 - Add Document.createFooElement inline shortcuts.
 - Add CanvasElement.getContext2d(), getContextWebGL() inline shortcuts.
 - Remove HTML\*, IDB\*, etc prefixes.
-- For each class, copy all implementedInterfaces members.
 - Split output into multiple files.
 
 # Things that will be nice to have

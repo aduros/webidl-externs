@@ -154,8 +154,6 @@ def generate (idl, usedTypes, knownTypes, file):
             write("extern class ", toHaxeType(idl.identifier.name))
             if idl.parent:
                 write(" extends ", toHaxeType(idl.parent.identifier.name))
-            for iface in idl.implementedInterfaces:
-                write(" // extends %s" % iface.identifier.name)
 
             arrayAccess = None
             staticVars = []
@@ -343,9 +341,6 @@ def generate (idl, usedTypes, knownTypes, file):
 def isDefinedInParents (idl, member, checkMembers=False):
     if idl.parent and isDefinedInParents(idl.parent, member, True):
         return True
-    for iface in idl.implementedInterfaces:
-        if isDefinedInParents(iface, member, True):
-            return True
     if checkMembers:
         for other in idl.members:
             if other.identifier.name == member.identifier.name:
