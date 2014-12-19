@@ -45,4 +45,6 @@ for file in set(WEBIDL_FILES + PREPROCESSED_WEBIDL_FILES) - MOZ_BLACKLIST:
 idls = parser.finish()
 
 haxe = Haxe.Program(idls)
+with open("CSS.txt") as file:
+    haxe.cssProperties += file.readlines()
 haxe.generate("output")

@@ -1,6 +1,5 @@
 # TODOs for API parity with old externs
 
-- Add all members to CSSStyleDeclaration
 - Add Document.createFooElement inline shortcuts.
 - Add CanvasElement.getContext2d(), getContextWebGL() inline shortcuts.
 - Remove HTML\*, IDB\*, etc prefixes.

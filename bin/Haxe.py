@@ -32,6 +32,7 @@ FUNCS = set([
 
 class Program ():
     idls = None
+    cssProperties = []
 
     def __init__ (self, idls):
         self.idls = idls
@@ -56,7 +57,7 @@ class Program ():
                     stripTrailingUnderscore(idl.identifier.name) in usedTypes and \
                     isAvailable(idl):
                 print("// Generated from %s" % idl.location.get())
-                generate(idl, usedTypes, knownTypes, sys.stdout)
+                generate(idl, usedTypes, knownTypes, self.cssProperties, sys.stdout)
                 print("\n")
 
 # Return all the types used by this IDL
@@ -116,7 +117,7 @@ def checkUsage (idl):
     return used
 
 # Convert an IDL to Haxe
-def generate (idl, usedTypes, knownTypes, file):
+def generate (idl, usedTypes, knownTypes, cssProperties, file):
     needsIndent = [False]
     indentDepth = [0]
     def beginIndent ():
@@ -193,6 +194,18 @@ def generate (idl, usedTypes, knownTypes, file):
                 for member in vars:
                     writeln(member)
                 writeln()
+
+            # Special case, add all CSS property shorthands
+            if idl.identifier.name == "CSSStyleDeclaration":
+                def repl (match):
+                    return match.group(1).upper()
+                for prop in cssProperties:
+                    prop = prop.strip()
+                    haxeName = re.sub(r"-+(.)", repl, prop)
+                    writeln("/** Shorthand for the \"%s\" CSS property. */" % prop)
+                    writeln("var %s :String;" % haxeName)
+                writeln()
+
             ctor = idl.ctor()
             if ctor:
                 writeln(ctor)
