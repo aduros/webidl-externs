@@ -1,6 +1,5 @@
 # TODOs for API parity with old externs
 
-- Add CanvasElement.getContext2d(), getContextWebGL() inline shortcuts.
 - Remove HTML\*, IDB\*, etc prefixes.
 - Split output into multiple files.
 

@@ -280,6 +280,12 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                     writeln("var %s :String;" % haxeName)
                 writeln()
 
+            ctor = idl.ctor()
+            if ctor:
+                writeln(ctor)
+            for member in methods:
+                writeln(member)
+
             # For HTMLDocument, add all createFooElement shortcuts
             if idl.identifier.name == "HTMLDocument":
                 for name, html in HTML_ELEMENTS.iteritems():
@@ -288,13 +294,42 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                     writeln(" return cast createElement(\"%s\"); }" % html)
                 writeln()
 
-            ctor = idl.ctor()
-            if ctor:
-                writeln(ctor)
-            for member in methods:
-                writeln(member)
+            # For HTMLCanvasElement, add getContext shortcuts
+            if idl.identifier.name == "HTMLCanvasElement":
+                writeln()
+                def beginContext (name, attribsType, haxeType):
+                    writeln("/** Shorthand for getting a %s. */" % haxeType)
+                    writeln("inline function getContext%s( ?attribs : %s ) : %s {" % (name, attribsType, haxeType))
+                    beginIndent()
+                def endContext ():
+                    endIndent()
+                    writeln("}")
+
+                beginContext("2d", "Dynamic", "CanvasRenderingContext2D")
+                writeln("return cast getContext(\"2d\", attribs);")
+                endContext()
+
+                beginContext("WebGL", "WebGLContextAttributes", "WebGLRenderingContext")
+                writeln("return CanvasUtil.getContextWebGL(this, attribs);")
+                endContext()
+
             endIndent()
             write("}")
+
+            if idl.identifier.name == "HTMLCanvasElement":
+                import textwrap
+                writeln()
+                write(textwrap.dedent("""
+                    private class CanvasUtil {
+                        public static function getContextWebGL( canvas :HTMLCanvasElement, attribs :Dynamic ) {
+                            for (name in ["webgl", "experimental-webgl"]) {
+                                var ctx = canvas.getContext(name, attribs);
+                                if (ctx != null) return ctx;
+                            }
+                            return null;
+                        }
+                    }
+                """))
 
         elif isinstance(idl, IDLCallbackType):
             returnType, arguments = idl.signatures()[0]
