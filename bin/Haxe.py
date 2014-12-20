@@ -22,8 +22,9 @@ BLACKLIST = set([
 ])
 
 PREFS = set([
-    "media.mediasource.enabled",
     "canvas.path.enabled",
+    "media.mediasource.enabled",
+    "media.webvtt.enabled",
 ])
 
 FUNCS = set([
