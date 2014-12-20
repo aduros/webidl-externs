@@ -31,6 +31,79 @@ FUNCS = set([
     "nsDocument::IsWebComponentsEnabled",
 ])
 
+HTML_ELEMENTS = {
+    "AnchorElement": "a",
+    "AppletElement": "applet",
+    "AreaElement": "area",
+    "AudioElement": "audio",
+    "BaseElement": "base",
+    # "BaseFontElement": "basefont",
+    "BodyElement": "body",
+    "BRElement": "br",
+    "ButtonElement": "button",
+    "CanvasElement": "canvas",
+    "ContentElement": "content",
+    "DataListElement": "datalist",
+    # "DetailsElement": "details",
+    "DirectoryElement": "dir",
+    "DivElement": "div",
+    "DListElement": "dl",
+    # "Element",
+    "EmbedElement": "embed",
+    "FieldSetElement": "fieldset",
+    "FontElement": "font",
+    "FormElement": "form",
+    "FrameElement": "frame",
+    "FrameSetElement": "frameset",
+    "HeadElement": "head",
+    # "HeadingElement"
+    "HRElement": "hr",
+    "HtmlElement": "html",
+    "IFrameElement": "iframe",
+    "ImageElement": "img",
+    "InputElement": "input",
+    # "KeygenElement": "keygen",
+    "LabelElement": "label",
+    "LegendElement": "legend",
+    "LIElement": "li",
+    "LinkElement": "link",
+    "MapElement": "map",
+    # "MarqueeElement": "marquee",
+    "MediaElement": "media",
+    "MenuElement": "menu",
+    "MetaElement": "meta",
+    "MeterElement": "meter",
+    "ModElement": "mod",
+    "ObjectElement": "object",
+    "OListElement": "ol",
+    "OptGroupElement": "optgroup",
+    "OptionElement": "option",
+    "OutputElement": "output",
+    "ParagraphElement": "p",
+    "ParamElement": "param",
+    "PreElement": "pre",
+    "ProgressElement": "progress",
+    "QuoteElement": "quote",
+    "ScriptElement": "script",
+    "SelectElement": "select",
+    "ShadowElement": "shadow",
+    "SourceElement": "source",
+    "SpanElement": "span",
+    "StyleElement": "style",
+    "TableCaptionElement": "caption",
+    "TableCellElement": "td",
+    "TableColElement": "col",
+    "TableElement": "table",
+    "TableRowElement": "tr",
+    "TableSectionElement": "thead",
+    "TextAreaElement": "textarea",
+    "TitleElement": "title",
+    "TrackElement": "track",
+    "UListElement": "ul",
+    # "UnknownElement",
+    "VideoElement": "video",
+}
+
 class Program ():
     idls = None
     cssProperties = []
@@ -196,7 +269,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                     writeln(member)
                 writeln()
 
-            # Special case, add all CSS property shorthands
+            # For CSSStyleDeclaration, add all CSS property shorthands
             if idl.identifier.name == "CSSStyleDeclaration":
                 def repl (match):
                     return match.group(1).upper()
@@ -205,6 +278,14 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                     haxeName = re.sub(r"-+(.)", repl, prop)
                     writeln("/** Shorthand for the \"%s\" CSS property. */" % prop)
                     writeln("var %s :String;" % haxeName)
+                writeln()
+
+            # For HTMLDocument, add all createFooElement shortcuts
+            if idl.identifier.name == "HTMLDocument":
+                for name, html in HTML_ELEMENTS.iteritems():
+                    writeln("/** Shorthand for creating an HTML <%s> element. */" % html)
+                    write("inline function create%s() : HTML%s {" % (name, name))
+                    writeln(" return cast createElement(\"%s\"); }" % html)
                 writeln()
 
             ctor = idl.ctor()
