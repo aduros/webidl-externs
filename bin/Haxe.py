@@ -378,7 +378,14 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                 # TODO(bruno): Enable Promise type parameter
                 write("Promise/*<%s>*/" % idl._promiseInnerType)
             elif idl.isUnion():
-                write("Dynamic/*UNION*/") # TODO(bruno): Handle union types somehow
+                def writeUnion (memberTypes):
+                    if len(memberTypes) > 1:
+                        write("haxe.EitherType<", memberTypes[0], ",")
+                        writeUnion(memberTypes[1:])
+                        write(">")
+                    else:
+                        write(memberTypes[0])
+                writeUnion(idl.memberTypes)
             elif idl.isString() or idl.isByteString() or idl.isDOMString() or idl.isUSVString():
                 write("String")
             elif idl.isNumeric():
