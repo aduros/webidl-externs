@@ -305,7 +305,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                     endIndent()
                     writeln("}")
 
-                beginContext("2d", "Dynamic", "CanvasRenderingContext2D")
+                beginContext("2d", "{}", "CanvasRenderingContext2D")
                 writeln("return cast getContext(\"2d\", attribs);")
                 endContext()
 
@@ -321,7 +321,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                 writeln()
                 write(textwrap.dedent("""
                     private class CanvasUtil {
-                        public static function getContextWebGL( canvas :HTMLCanvasElement, attribs :Dynamic ) {
+                        public static function getContextWebGL( canvas :HTMLCanvasElement, attribs :{} ) {
                             for (name in ["webgl", "experimental-webgl"]) {
                                 var ctx = canvas.getContext(name, attribs);
                                 if (ctx != null) return ctx;
@@ -332,13 +332,17 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                 """))
 
         elif isinstance(idl, IDLCallbackType):
-            returnType, arguments = idl.signatures()[0]
-            if len(arguments) > 0:
-                for argument in arguments:
-                    write(argument.type, " -> ")
+            if idl.identifier.name == "EventHandlerNonNull":
+                # Special case for event handler convenience
+                write("haxe.Constraints.Function")
             else:
-                write("Void -> ")
-            write(returnType)
+                returnType, arguments = idl.signatures()[0]
+                if len(arguments) > 0:
+                    for argument in arguments:
+                        write(argument.type, " -> ")
+                else:
+                    write("Void -> ")
+                write(returnType)
 
         elif isinstance(idl, IDLDictionary):
             # writeln("typedef ", idl.identifier, " =")
