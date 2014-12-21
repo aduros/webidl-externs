@@ -12,16 +12,14 @@ Advantages over the old js.html externs:
 
 # Usage
 
-1. `svn checkout https://github.com/mozilla/gecko-dev/trunk/dom/webidl webidl/mozilla`
-2. `bin/generate`
+Run `bin/generate`, and `bin/validate` to make sure the output compiles.
 
 If there's an API that's missing, add it in a new .webidl file under the
 webidl/ directory.
 
 # TODOs for API parity with old externs
 
-- Remove HTML\*, IDB\*, etc prefixes.
-- Split output into multiple files.
+- Add subpackages for audio, fs, rtc, sql.
 
 # Things that will be nice to have
 

@@ -29,6 +29,7 @@ execfile("webidl/mozilla/moz.build")
 
 parser = WebIDL.Parser()
 def parse (file):
+    print("Parsing %s..." % file)
     process = subprocess.Popen(["cpp", "-C", "-P", file], stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     parser.parse(stdout, file)
@@ -47,4 +48,4 @@ idls = parser.finish()
 haxe = Haxe.Program(idls)
 with open("CSS.txt") as file:
     haxe.cssProperties += file.readlines()
-haxe.generate("output")
+haxe.generate("build")

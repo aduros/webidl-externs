@@ -1,6 +1,6 @@
-import sys
-
+import os
 import re
+import sys
 
 from WebIDL import *
 
@@ -130,9 +130,7 @@ class Program ():
                     isinstance(idl, IDLDictionary)) and \
                     stripTrailingUnderscore(idl.identifier.name) in usedTypes and \
                     isAvailable(idl):
-                print("// Generated from %s" % idl.location.get())
-                generate(idl, usedTypes, knownTypes, self.cssProperties, sys.stdout)
-                print("\n")
+                generate(idl, usedTypes, knownTypes, self.cssProperties, outputDir)
 
 # Return all the types used by this IDL
 def checkUsage (idl):
@@ -191,7 +189,9 @@ def checkUsage (idl):
     return used
 
 # Convert an IDL to Haxe
-def generate (idl, usedTypes, knownTypes, cssProperties, file):
+def generate (idl, usedTypes, knownTypes, cssProperties, outputDir):
+    package = toHaxePackage(idl.identifier.name)
+
     needsIndent = [False]
     indentDepth = [0]
     def beginIndent ():
@@ -223,12 +223,20 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
         if idl.name != toHaxeIdentifier(idl.name):
             writeln("@:native(\"%s\")" % idl.name)
 
+    def writeHaxeType (name):
+        # Include the package name if the type is in a different package
+        typePackage = toHaxePackage(name)
+        if package != typePackage:
+            write(".".join(typePackage)+".")
+        write(toHaxeType(name))
+
     def writeIdl (idl):
         if isinstance(idl, IDLInterface):
             writeln("@:native(\"%s\")" % stripTrailingUnderscore(idl.identifier.name))
             write("extern class ", toHaxeType(idl.identifier.name))
             if idl.parent:
-                write(" extends ", toHaxeType(idl.parent.identifier.name))
+                write(" extends ")
+                writeHaxeType(idl.parent.identifier.name)
 
             arrayAccess = None
             staticVars = []
@@ -290,7 +298,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
             if idl.identifier.name == "HTMLDocument":
                 for name, html in HTML_ELEMENTS.iteritems():
                     writeln("/** Shorthand for creating an HTML <%s> element. */" % html)
-                    write("inline function create%s() : HTML%s {" % (name, name))
+                    write("inline function create%s() : %s {" % (name, name))
                     writeln(" return cast createElement(\"%s\"); }" % html)
                 writeln()
 
@@ -309,7 +317,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                 writeln("return cast getContext(\"2d\", attribs);")
                 endContext()
 
-                beginContext("WebGL", "WebGLContextAttributes", "WebGLRenderingContext")
+                beginContext("WebGL", "js2.html.webgl.ContextAttributes", "js2.html.webgl.RenderingContext")
                 writeln("return CanvasUtil.getContextWebGL(this, attribs);")
                 endContext()
 
@@ -321,7 +329,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
                 writeln()
                 write(textwrap.dedent("""
                     private class CanvasUtil {
-                        public static function getContextWebGL( canvas :HTMLCanvasElement, attribs :{} ) {
+                        public static function getContextWebGL( canvas :CanvasElement, attribs :{} ) {
                             for (name in ["webgl", "experimental-webgl"]) {
                                 var ctx = canvas.getContext(name, attribs);
                                 if (ctx != null) return ctx;
@@ -362,7 +370,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
 
         elif isinstance(idl, IDLEnum):
             writeln("@:native(\"%s\")" % idl.identifier.name)
-            writeln("@:enum abstract ", idl.identifier, "(String)")
+            writeln("@:enum abstract ", toHaxeType(idl.identifier.name), "(String)")
             writeln("{")
             beginIndent()
             for value in idl.values():
@@ -405,7 +413,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
             elif name not in usedTypes or name not in knownTypes:
                 write("Dynamic/*%s*/" % name)
             else:
-                write(toHaxeType(idl.name))
+                writeHaxeType(idl.name)
 
         elif isinstance(idl, IDLIdentifier):
             write(toHaxeIdentifier(idl.name))
@@ -477,7 +485,20 @@ def generate (idl, usedTypes, knownTypes, cssProperties, file):
         else:
             assert False, "Unhandled IDL type: %s" % type(idl)
 
+    dir = "%s/%s" % (outputDir, "/".join(package))
+    try:
+        os.makedirs(dir)
+    except OSError as e:
+        pass
+    fileName = "%s/%s.hx" % (dir, toHaxeType(idl.identifier.name))
+    print("Generating %s..." % fileName)
+
+    file = open(fileName, "w")
+    writeln("package %s;" % (".".join(package)))
+    writeln()
+    writeln("// Generated from %s" % idl.location.get())
     writeIdl(idl)
+    file.close()
 
 def isDefinedInParents (idl, member, checkMembers=False):
     if idl.parent and isDefinedInParents(idl.parent, member, True):
@@ -503,7 +524,24 @@ def toHaxeType (name):
     name = stripTrailingUnderscore(name)
     if name != "":
         name = name[0].upper() + name[1:]
+    name = re.sub("^HTML(.+Element)", "\\1", name)
+    if name.startswith("SVG"):
+        name = name[len("SVG"):]
+    if name.startswith("WebGL"):
+        name = name[len("WebGL"):]
+    elif name.startswith("IDB"):
+        name = name[len("IDB"):]
     return name
+
+def toHaxePackage (name):
+    package = ["js2", "html"]
+    if name.startswith("WebGL"):
+        package.append("webgl")
+    elif name.startswith("IDB"):
+        package.append("idb")
+    elif name.startswith("SVG"):
+        package.append("svg")
+    return package
 
 def toEnumValue (value):
     if value == "":

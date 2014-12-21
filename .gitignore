@@ -1,3 +1,4 @@
+build/
 webidlyacc.py
 parser.out
 *.pyc
