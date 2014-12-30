@@ -1,3 +1,3 @@
 #!/bin/sh
 
-haxe -js none.js --no-output -cp build --macro 'include("js2.html", true)'
+haxe -js none.js --no-output -cp build --macro 'include("js.html2", true)'

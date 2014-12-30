@@ -318,7 +318,7 @@ def generate (idl, usedTypes, knownTypes, cssProperties, outputDir):
                 writeln("return cast getContext(\"2d\", attribs);")
                 endContext()
 
-                beginContext("WebGL", "js2.html.webgl.ContextAttributes", "js2.html.webgl.RenderingContext")
+                beginContext("WebGL", "js.html2.webgl.ContextAttributes", "js.html2.webgl.RenderingContext")
                 writeln("return CanvasUtil.getContextWebGL(this, attribs);")
                 endContext()
 
@@ -534,7 +534,7 @@ def toHaxeType (name):
     return name
 
 def toHaxePackage (name):
-    package = ["js2", "html"]
+    package = ["js", "html2"]
     if name.startswith("WebGL"):
         package.append("webgl")
     elif name.startswith("IDB"):
