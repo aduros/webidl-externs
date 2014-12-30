@@ -23,13 +23,23 @@ BLACKLIST = set([
 
 PREFS = set([
     "canvas.path.enabled",
+    "dom.gamepad.enabled",
+    "dom.webnotifications.enabled",
+    "dom.workers.sharedWorkers.enabled",
+    "layout.css.DOMMatrix.enabled",
+    "layout.css.DOMPoint.enabled",
     "media.mediasource.enabled",
+    # "media.peerconnection.enabled",
+    # "media.peerconnection.identity.enabled",
+    "media.track.enabled",
     "media.webvtt.enabled",
+    # "dom.w3c_pointer_events.enabled",
 ])
 
 FUNCS = set([
     "nsDocument::IsWebComponentsEnabled",
     "mozilla::dom::WebSocket::PrefEnabled",
+    "mozilla::dom::workers::WorkerPrivate::WorkerAvailable",
 ])
 
 HTML_ELEMENTS = {
@@ -126,7 +136,7 @@ PACKAGES = {
         "BiquadFilterType",
         "ChannelCountMode",
         "ChannelInterpretation",
-        "ChannelMergerMode",
+        "ChannelMergerNode",
         "ChannelSplitterNode",
         "ConvolverNode",
         "DelayNode",
@@ -145,7 +155,11 @@ PACKAGES = {
         "PanningModelType",
         "PeriodicWave",
         "ScriptProcessorNode",
+        "StereoPannerNode",
         "WaveShaperNode",
+    ]),
+    "rtc": PackageGroup([
+        "RTCPeerConnection",
     ]),
 }
 

@@ -1,3 +1,29 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-haxe -js none.js --no-output -cp build --macro 'include("js.html2", true)'
+import os
+import subprocess
+
+subprocess.check_call([
+    "haxe", "-js", "none.js", "--no-output", "-cp", "build",
+    "--macro", "include(\"js.html2\", true)",
+])
+
+std = "/home/bruno/dev/haxe/std/js/html"
+for path, dirs, files in os.walk(std):
+    for file in files:
+        if file.endswith("Callback.hx"):
+            continue # Skip callbacks
+
+        rel = os.path.relpath(path+"/"+file, std)
+        if not os.path.isfile("build/js/html2/"+rel):
+            print("Missing: "+rel)
+
+# #!/bin/sh -e
+
+# haxe -js none.js --no-output -cp build --macro
+
+# std=~/dev/haxe/std/js/html
+
+# for file in `find "$std" -name "*.hx"`; do
+#     echo $file
+# done

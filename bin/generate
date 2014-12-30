@@ -30,7 +30,11 @@ execfile("webidl/mozilla/moz.build")
 parser = WebIDL.Parser()
 def parse (file):
     print("Parsing %s..." % file)
-    process = subprocess.Popen(["cpp", "-C", "-P", file], stdout=subprocess.PIPE)
+    defines = []
+    for key, value in CONFIG.iteritems():
+        if value:
+            defines += ["-D", key]
+    process = subprocess.Popen(["cpp"] + defines + ["-C", "-P", file], stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
     parser.parse(stdout, file)
     return
