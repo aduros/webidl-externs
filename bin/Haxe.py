@@ -105,6 +105,50 @@ HTML_ELEMENTS = {
     "VideoElement": "video",
 }
 
+class PackageGroup:
+    def __init__ (self, names, removePrefix=None):
+        self.names = set(names)
+        self.removePrefix = removePrefix
+
+PACKAGES = {
+    # http://www.w3.org/TR/webaudio/
+    "audio": PackageGroup([
+        "AnalyserNode",
+        "AudioBuffer",
+        "AudioBufferSourceNode",
+        "AudioContext",
+        "AudioDestinationNode",
+        "AudioListener",
+        "AudioNode",
+        "AudioParam",
+        "AudioProcessingEvent",
+        "BiquadFilterNode",
+        "BiquadFilterType",
+        "ChannelCountMode",
+        "ChannelInterpretation",
+        "ChannelMergerMode",
+        "ChannelSplitterNode",
+        "ConvolverNode",
+        "DelayNode",
+        "DistanceModelType",
+        "DynamicsCompressorNode",
+        "GainNode",
+        "MediaElementAudioSourceNode",
+        "MediaStreamAudioDestinationNode",
+        "MediaStreamAudioSourceNode",
+        "OfflineAudioCompletionEvent",
+        "OfflineAudioContext",
+        "OscillatorNode",
+        "OscillatorType",
+        "OverSampleType",
+        "PannerNode",
+        "PanningModelType",
+        "PeriodicWave",
+        "ScriptProcessorNode",
+        "WaveShaperNode",
+    ]),
+}
+
 class Program ():
     idls = None
     cssProperties = []
@@ -531,6 +575,11 @@ def toHaxeType (name):
         name = name[len("WebGL"):]
     elif name.startswith("IDB"):
         name = name[len("IDB"):]
+    else:
+        for pkg, group in PACKAGES.iteritems():
+            if group.removePrefix and name.startswith(group.removePrefix) and name in group.names:
+                name = name[len(group.removePrefix):]
+                break
     return name
 
 def toHaxePackage (name):
@@ -541,6 +590,11 @@ def toHaxePackage (name):
         package.append("idb")
     elif name.startswith("SVG"):
         package.append("svg")
+    else:
+        for pkg, group in PACKAGES.iteritems():
+            if name in group.names:
+                package.append(pkg)
+                break
     return package
 
 def toEnumValue (value):
