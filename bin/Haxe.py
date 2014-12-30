@@ -370,7 +370,6 @@ def generate (idl, usedTypes, knownTypes, cssProperties, outputDir):
             write("}")
 
         elif isinstance(idl, IDLEnum):
-            writeln("@:native(\"%s\")" % idl.identifier.name)
             writeln("@:enum abstract ", toHaxeType(idl.identifier.name), "(String)")
             writeln("{")
             beginIndent()
