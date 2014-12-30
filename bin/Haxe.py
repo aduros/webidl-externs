@@ -29,6 +29,7 @@ PREFS = set([
 
 FUNCS = set([
     "nsDocument::IsWebComponentsEnabled",
+    "mozilla::dom::WebSocket::PrefEnabled",
 ])
 
 HTML_ELEMENTS = {
