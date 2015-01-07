@@ -9,17 +9,17 @@ import Haxe
 
 CONFIG = {
     "MOZ_BUILD_APP": "browser",
+    "MOZ_EME": True,
     "MOZ_GAMEPAD": True,
+    "MOZ_WEBSPEECH": True,
 
     "MOZ_AUDIO_CHANNEL_MANAGER": False,
     "MOZ_B2G_BT": False,
     "MOZ_B2G_FM": False,
     "MOZ_B2G_RIL": False,
     "MOZ_DEBUG": False,
-    "MOZ_EME": False,
     "MOZ_NFC": False,
     "MOZ_WEBRTC": False,
-    "MOZ_WEBSPEECH": False,
     "MOZ_WIDGET_TOOLKIT": False,
 }
 MOZ_BLACKLIST = set([

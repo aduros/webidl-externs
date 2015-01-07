@@ -17,9 +17,15 @@ Run `bin/generate`, and `bin/validate` to make sure the output compiles.
 If there's an API that's missing, add it in a new .webidl file under the
 webidl/ directory.
 
+# Incompatibilities with old js.html
+
+- A few classes have been renamed to more closely match their actual
+  name in JS: eg, DOMWindow to Window.
+- js.html.sql (WebSQL) is obsolete and has been removed.
+
 # TODOs for API parity with old externs
 
-- Add subpackages for audio, fs, rtc, sql.
+- Add subpackages for fs, rtc, sql.
 
 # Things that will be nice to have
 

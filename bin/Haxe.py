@@ -22,24 +22,49 @@ BLACKLIST = set([
 ])
 
 PREFS = set([
+    "beacon.enabled",
+    "canvas.customfocusring.enabled",
+    "canvas.filters.enabled",
+    "canvas.focusring.enabled",
+    "canvas.hitregions.enabled",
     "canvas.path.enabled",
+    "dom.animations-api.core.enabled",
+    "dom.battery.enabled",
     "dom.gamepad.enabled",
+    "dom.image.picture.enabled",
+    "dom.image.srcset.enabled",
+    "dom.imagecapture.enabled",
+    "dom.w3c_pointer_events.enabled",
+    "dom.webcrypto.enabled",
     "dom.webnotifications.enabled",
     "dom.workers.sharedWorkers.enabled",
+    "geo.enabled",
     "layout.css.DOMMatrix.enabled",
     "layout.css.DOMPoint.enabled",
+    "layout.css.DOMQuad.enabled",
+    "layout.css.convertFromNode.enabled",
+    "layout.css.font-loading-api.enabled",
+    "media.eme.enabled",
     "media.mediasource.enabled",
+    "media.track.enabled",
+    "media.webspeech.recognition.enable", # sic
+    "media.webspeech.synth.enabled",
+    "media.webvtt.enabled",
+    "media.webvtt.regions.enabled",
+    "svg.svg-iframe.enabled",
+    # "dom.identity.enabled",
     # "media.peerconnection.enabled",
     # "media.peerconnection.identity.enabled",
-    "media.track.enabled",
-    "media.webvtt.enabled",
-    # "dom.w3c_pointer_events.enabled",
 ])
 
 FUNCS = set([
-    "nsDocument::IsWebComponentsEnabled",
+    "TextTrackRegion::RegionsEnabled",
+    "mozilla::dom::EventSource::PrefEnabled",
+    "mozilla::dom::Touch::PrefEnabled",
+    "mozilla::dom::TouchList::PrefEnabled",
     "mozilla::dom::WebSocket::PrefEnabled",
     "mozilla::dom::workers::WorkerPrivate::WorkerAvailable",
+    "nsDocument::IsWebComponentsEnabled",
 ])
 
 HTML_ELEMENTS = {
@@ -92,6 +117,7 @@ HTML_ELEMENTS = {
     "OutputElement": "output",
     "ParagraphElement": "p",
     "ParamElement": "param",
+    "PictureElement": "picture",
     "PreElement": "pre",
     "ProgressElement": "progress",
     "QuoteElement": "quote",
