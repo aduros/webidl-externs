@@ -469,7 +469,10 @@ def generate (idl, usedTypes, knownTypes, cssProperties, outputDir):
             elif idl.isObject() or idl.isAny():
                 write("Dynamic")
             elif name not in usedTypes or name not in knownTypes:
-                write("Dynamic/*%s*/" % name)
+                if name == "WindowProxy":
+                    write("Window") # Special case hack
+                else:
+                    write("Dynamic/*MISSING %s*/" % name)
             else:
                 writeHaxeType(idl.name)
 
