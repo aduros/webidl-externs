@@ -180,8 +180,13 @@ class Program ():
 
         usedTypes = set()
         for idl in self.idls:
-            if isinstance(idl, IDLInterface) and not idl.getExtendedAttribute("NoInterfaceObject"):
+            if isinstance(idl, IDLInterface):
                 usedTypes |= checkUsage(idl)
+
+        # Discard all implemented interfaces
+        for idl in self.idls:
+            if isinstance(idl, IDLImplementsStatement) and idl.implementee.getExtendedAttribute("NoInterfaceObject"):
+                usedTypes.discard(idl.implementee.identifier.name)
 
         for idl in self.idls:
             if (isinstance(idl, IDLInterface) or \
