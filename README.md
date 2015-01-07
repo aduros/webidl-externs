@@ -25,7 +25,7 @@ webidl/ directory.
 
 # TODOs for API parity with old externs
 
-- Add subpackages for fs, rtc, sql.
+- Add subpackages for fs, sql.
 
 # Things that will be nice to have
 

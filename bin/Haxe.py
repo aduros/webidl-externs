@@ -53,8 +53,8 @@ PREFS = set([
     "media.webvtt.regions.enabled",
     "svg.svg-iframe.enabled",
     # "dom.identity.enabled",
-    # "media.peerconnection.enabled",
-    # "media.peerconnection.identity.enabled",
+    "media.peerconnection.enabled",
+    "media.peerconnection.identity.enabled",
 ])
 
 FUNCS = set([
@@ -185,7 +185,7 @@ PACKAGES = {
         "WaveShaperNode",
     ]),
     "rtc": PackageGroup([
-        "RTCPeerConnection",
+        "DataChannel",
     ]),
 }
 
@@ -604,6 +604,7 @@ def isDefinedInParents (idl, member, checkMembers=False):
 def stripTrailingUnderscore (name):
     if name.endswith("_"):
         name = name[0:-1]
+    name = re.sub(r"^moz", "", name) # Also unprefix moz...
     return name
 
 def toHaxeIdentifier (name):
@@ -623,6 +624,8 @@ def toHaxeType (name):
         name = name[len("WebGL"):]
     elif name.startswith("IDB"):
         name = name[len("IDB"):]
+    elif name.startswith("RTC"):
+        name = name[len("RTC"):]
     else:
         for pkg, group in PACKAGES.iteritems():
             if group.removePrefix and name.startswith(group.removePrefix) and name in group.names:
@@ -631,6 +634,7 @@ def toHaxeType (name):
     return name
 
 def toHaxePackage (name):
+    name = stripTrailingUnderscore(name)
     package = ["js", "html2"]
     if name.startswith("WebGL"):
         package.append("webgl")
@@ -638,6 +642,8 @@ def toHaxePackage (name):
         package.append("idb")
     elif name.startswith("SVG"):
         package.append("svg")
+    elif name.startswith("RTC"):
+        package.append("rtc")
     else:
         for pkg, group in PACKAGES.iteritems():
             if name in group.names:
@@ -673,7 +679,9 @@ def isAvailable (idl):
         return False
 
     if isMozPrefixed(idl.identifier.name):
-        return False
+        # Hack for WebRTC, which is moz prefixed but we want it
+        if not idl.identifier.name.startswith("mozRTC"):
+            return False
 
     if hasattr(idl, "getExtendedAttribute"):
         if idl.getExtendedAttribute("ChromeOnly") or \

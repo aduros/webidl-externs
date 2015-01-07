@@ -12,6 +12,7 @@ CONFIG = {
     "MOZ_EME": True,
     "MOZ_GAMEPAD": True,
     "MOZ_WEBSPEECH": True,
+    "MOZ_WEBRTC": True,
 
     "MOZ_AUDIO_CHANNEL_MANAGER": False,
     "MOZ_B2G_BT": False,
@@ -19,7 +20,6 @@ CONFIG = {
     "MOZ_B2G_RIL": False,
     "MOZ_DEBUG": False,
     "MOZ_NFC": False,
-    "MOZ_WEBRTC": False,
     "MOZ_WIDGET_TOOLKIT": False,
 }
 MOZ_BLACKLIST = set([
