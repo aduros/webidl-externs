@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+from distutils import dir_util
 import glob
 import os
+import shutil
 import subprocess
 
 import WebIDL
@@ -37,7 +39,7 @@ def parse (file):
             defines += ["-D", key]
     process = subprocess.Popen(["cpp"] + defines + ["-C", "-P", file], stdout=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    parser.parse(stdout, file)
+    parser.parse(stdout, os.path.relpath(file, "webidl"))
     return
 
 # Include all files in webidl
@@ -53,4 +55,7 @@ idls = parser.finish()
 haxe = Haxe.Program(idls)
 with open("CSS.txt") as file:
     haxe.cssProperties += file.readlines()
+
+shutil.rmtree("build")
 haxe.generate("build")
+dir_util.copy_tree("haxe", "build")
