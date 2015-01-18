@@ -27,8 +27,6 @@ webidl/ directory.
 
 - CSSRule and friends.
 - ApplicationCache.
-- ErrorEvent.
-- TouchEvent.
 
 # Things that will be nice to have
 
@@ -178,8 +176,6 @@ of Chrome-only APIs.
     - ?
 - js.html.TextTrackCue
     - Renamed to VTTCue.
-- js.html.TrackEvent
-    - ?
 - js.html.WorkerContext
     - Obsolete.
 - js.html.XMLHttpRequestException

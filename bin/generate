@@ -24,6 +24,10 @@ CONFIG = {
     "MOZ_NFC": False,
     "MOZ_WIDGET_TOOLKIT": False,
 }
+MOZ_WHITELIST = set([
+    "ErrorEvent.webidl",
+    "TrackEvent.webidl",
+])
 MOZ_BLACKLIST = set([
     "EventListener.webidl",
     "LegacyQueryInterface.webidl",
@@ -47,7 +51,7 @@ for file in glob.glob("webidl/*.webidl"):
     parse(file)
 
 # Include all files from mozilla
-for file in set(WEBIDL_FILES + PREPROCESSED_WEBIDL_FILES) - MOZ_BLACKLIST:
+for file in (set(WEBIDL_FILES + PREPROCESSED_WEBIDL_FILES) | MOZ_WHITELIST) - MOZ_BLACKLIST:
     parse("webidl/mozilla/"+file)
 
 idls = parser.finish()
