@@ -70,6 +70,10 @@ FUNCS = set([
     "nsDocument::IsWebComponentsEnabled",
 ])
 
+RENAMES = {
+    "OfflineResourceList": "ApplicationCache",
+}
+
 HTML_ELEMENTS = {
     "AnchorElement": "a",
     "AppletElement": "applet",
@@ -632,6 +636,8 @@ def stripTrailingUnderscore (name):
     if name.endswith("_"):
         name = name[0:-1]
     name = re.sub(r"^moz", "", name) # Also unprefix moz...
+    if name in RENAMES:
+        name = RENAMES[name]
     return name
 
 def toHaxeIdentifier (name):

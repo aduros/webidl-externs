@@ -26,7 +26,6 @@ webidl/ directory.
 # TODOs for API parity with old externs
 
 - CSSRule and friends.
-- ApplicationCache.
 
 # Things that will be nice to have
 
